@@ -1,0 +1,20 @@
+*.class
+build
+.DS_Store
+.gradle
+.idea
+*.iml
+*.ipr
+*.iws
+out/**
+# Package Files #
+*.log
+apps-home
+apps-local-data
+configuration/dev-local
+configuration/erb/
+configuration/local-virtualbox
+configuration/local
+configuration/vagrant/
+jmeter/*errors*.csv
+*.swp
