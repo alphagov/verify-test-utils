@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.util.Enumeration;
 
@@ -20,7 +21,7 @@ public class ReceivedRequest {
     protected final String querystring;
     protected final String method;
     protected final String url;
-    protected String entity;
+    protected byte[] entity;
 
     public ReceivedRequest(HttpServletRequest request) {
         this.method = request.getMethod();
@@ -31,9 +32,9 @@ public class ReceivedRequest {
         this.entity = readEntity(request);
     }
 
-    protected static String readEntity(HttpServletRequest request) {
-        try (Reader in = request.getReader()) {
-            return IOUtils.toString(in);
+    protected static byte[] readEntity(HttpServletRequest request) {
+        try (InputStream in = request.getInputStream()) {
+            return IOUtils.toByteArray(in);
         } catch (IOException e) {
             throw propagate(e);
         }
@@ -73,7 +74,17 @@ public class ReceivedRequest {
         return method;
     }
 
-    public String getEntity() {
+    public byte[] getEntityBytes() {
         return entity;
+    }
+
+    /**
+     * This is risky as the entity could be e.g. GZipped.
+     *
+     * @deprecated Use {@link #getEntityBytes()} instead
+     */
+    @Deprecated
+    public String getEntity() {
+        return new String(entity);
     }
 }
