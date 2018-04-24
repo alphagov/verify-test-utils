@@ -1,6 +1,8 @@
 
 # SAML Test Utils
 
+[![Build Status](https://travis-ci.org/alphagov/verify-test-utils.svg?branch=master)](https://travis-ci.org/alphagov/verify-test-utils)
+
 Library for various SAML testing utility operations. These include:
 
 * Temporary file helpers
