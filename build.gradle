@@ -1,41 +1,67 @@
+plugins { id "com.jfrog.bintray" version "1.8.0" }
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'maven-publish'
+group = "uk.gov.ida"
+version = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
 
-    group = "uk.gov.ida"
-    version = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
+repositories {
+    maven { url 'https://artifactory.ida.digital.cabinet-office.gov.uk/artifactory/whitelisted-repos' }
+}
 
-    repositories {
-        maven { url 'https://artifactory.ida.digital.cabinet-office.gov.uk/artifactory/whitelisted-repos' }
-    }
+dependencies {
+    compile 'junit:junit:4.11',
+            'org.assertj:assertj-core:1.6.0',
+            'org.mockito:mockito-core:1.9.5',
+            "com.google.guava:guava:16.0",
+            'org.eclipse.jetty:jetty-server:9.0.7.v20131107',
+            'com.google.guava:guava:16.0',
+            'commons-lang:commons-lang:2.6',
+            'commons-io:commons-io:2.4',
+            'io.dropwizard:dropwizard-jackson:1.1.4',
+            'io.dropwizard:dropwizard-client:1.1.4'
 
+}
 
-    task sourceJar(type: Jar) {
-        from sourceSets.main.allJava
-    }
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
 
-                artifact sourceJar {
-                    classifier "sources"
-                }
+            artifact sourceJar {
+                classifier "sources"
             }
         }
-        repositories {
-            mavenLocal()
-            maven {
-                url "/srv/maven" // change to point to your repo, e.g. http://my.org/repo
-            }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            url "/srv/maven" // change to point to your repo, e.g. http://my.org/repo
         }
     }
 }
 
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_API_KEY')
+    publications = ['mavenJava']
+    publish = true
+    pkg {
+        repo = 'maven-test'
+        name = 'ida-common-test-utils'
+        userOrg = 'alphagov'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/alphagov/verify-saml-libs.git'
+        version {
+            name = "$version"
+        }
+    }
+}
 task sonar(dependsOn: [':clean', ':build', 'sonarRunner'])
 
-defaultTasks 'jar', 'publishToMavenLocal'
+defaultTasks 'jar'
 
