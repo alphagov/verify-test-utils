@@ -30,6 +30,10 @@ task sourceJar(type: Jar) {
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            groupId = "uk.gov.ida"
+            artifactId = "common-test-utils"
+            version = "$version"
+
             from components.java
 
             artifact sourceJar {
