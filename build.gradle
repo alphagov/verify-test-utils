@@ -2,8 +2,9 @@ plugins { id "com.jfrog.bintray" version "1.8.0" }
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
+def buildVersion = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
 group = "uk.gov.ida"
-version = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
+version = "$buildVersion"
 
 repositories {
     maven { url 'https://artifactory.ida.digital.cabinet-office.gov.uk/artifactory/whitelisted-repos' }
@@ -61,7 +62,7 @@ bintray {
         licenses = ['MIT']
         vcsUrl = 'https://github.com/alphagov/verify-saml-libs.git'
         version {
-            name = "$version"
+            name = "$buildVersion"
         }
     }
 }
