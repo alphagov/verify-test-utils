@@ -60,7 +60,7 @@ bintray {
         name = 'ida-common-test-utils'
         userOrg = 'alphagov'
         licenses = ['MIT']
-        vcsUrl = 'https://github.com/alphagov/verify-saml-libs.git'
+        vcsUrl = 'https://github.com/alphagov/verify-test-utils.git'
         version {
             name = "$buildVersion"
         }
