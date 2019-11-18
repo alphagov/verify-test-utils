@@ -15,17 +15,17 @@ ext {
 }
 
 dependencies {
-    compile 'junit:junit:4.11',
-            'org.assertj:assertj-core:1.6.0',
-            'org.mockito:mockito-core:2.23.0',
-            "com.google.guava:guava:16.0",
-            'org.eclipse.jetty:jetty-server:9.0.7.v20131107',
-            'com.google.guava:guava:16.0',
-            'commons-lang:commons-lang:2.6',
-            'commons-io:commons-io:2.4',
-            "io.dropwizard:dropwizard-jackson:$dropwizard_version",
-            "io.dropwizard:dropwizard-client:$dropwizard_version"
+    implementation  'junit:junit:4.11',
+                    'com.google.guava:guava:16.0',
+                    'org.eclipse.jetty:jetty-server:9.0.7.v20131107',
+                    'com.google.guava:guava:16.0',
+                    'commons-lang:commons-lang:2.6',
+                    'commons-io:commons-io:2.4',
+                    "io.dropwizard:dropwizard-jackson:$dropwizard_version",
+                    "io.dropwizard:dropwizard-client:$dropwizard_version"
 
+    testImplementation  'org.assertj:assertj-core:3.14.0',
+                        'org.mockito:mockito-core:3.1.0'
 }
 
 task sourceJar(type: Jar) {
@@ -49,7 +49,11 @@ publishing {
     repositories {
         mavenLocal()
         maven {
-            url "/srv/maven" // change to point to your repo, e.g. http://my.org/repo
+            credentials {
+                username "${System.env.ARTIUSER}"
+                password "${System.env.ARTIPASSWORD}"
+            }
+            url "https://artifactory.ida.digital.cabinet-office.gov.uk/artifactory/libs-release-local"
         }
     }
 }
