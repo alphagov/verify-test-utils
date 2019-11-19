@@ -1,6 +1,7 @@
 language: java
 jdk:
   - openjdk11
+  - openjdk8
 before_install:
 # this is a hack, so PR builds can be tested in travis
   - perl -i -0pe 's/maven[\s\{]+[^\{\}]*\}/maven { url \"https:\/\/build.shibboleth.net\/nexus\/content\/groups\/public\" \n url \"https:\/\/repo1.maven.org\/maven2\" \n jcenter() }/gms' build.gradle
