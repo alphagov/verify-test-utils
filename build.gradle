@@ -2,6 +2,11 @@ plugins { id "com.jfrog.bintray" version "1.8.4" }
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 def buildVersion = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
 group = "uk.gov.ida"
 version = "$buildVersion"
