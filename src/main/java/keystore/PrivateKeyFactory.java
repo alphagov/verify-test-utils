@@ -1,7 +1,5 @@
 package keystore;
 
-import com.google.common.base.Throwables;
-
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -13,13 +11,17 @@ class PrivateKeyFactory {
 
     public PrivateKey createPrivateKey(byte[] cert) {
         KeySpec keySpec = new PKCS8EncodedKeySpec(cert);
-        KeyFactory keyFactory;
 
         try {
-            keyFactory = KeyFactory.getInstance("RSA");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             return keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw Throwables.propagate(e);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException rsaE) {
+            try {
+                KeyFactory keyFactory = KeyFactory.getInstance("EC");
+                return keyFactory.generatePrivate(keySpec);
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException ecE) {
+                throw new RuntimeException(rsaE);
+            }
         }
 
     }
