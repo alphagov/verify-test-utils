@@ -12,7 +12,7 @@ group = "uk.gov.ida"
 version = "$buildVersion"
 
 repositories {
-    maven { url 'https://gds.jfrog.io/artifactory/whitelisted-repos' }
+    maven { url 'https://gds.jfrog.io/artifactory/allowed-repos' }
 }
 
 ext {
