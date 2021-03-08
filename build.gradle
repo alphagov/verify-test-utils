@@ -37,9 +37,21 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier "javadoc"
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            customizePom(pom)
             groupId = "uk.gov.ida"
             artifactId = "common-test-utils"
             version = "$version"
@@ -48,6 +60,63 @@ publishing {
 
             artifact sourceJar {
                 classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username "missing"
+                password "missing"
+            }
+        }
+    }
+}
+
+def customizePom(pom) {
+    pom.withXml {
+        def root = asNode()
+
+        // eliminate test-scoped dependencies (no need in maven central POMs)
+        root.dependencies.removeAll { dep ->
+            dep.scope == "test"
+        }
+
+        // add all items necessary for maven central publication
+        root.children().last() + {
+            resolveStrategy = Closure.DELEGATE_FIRST
+
+            description 'Library for various SAML testing utility operations. These include'
+            name 'SAML Test Utils'
+            url 'https://github.com/alphagov/verify-test-utils'
+            organization {
+                name 'uk.gov.ida'
+                url 'https://github.com/alphagov'
+            }
+            issueManagement {
+                system 'GitHub'
+                url 'https://github.com/alphagov/verify-test-utils/issues'
+            }
+            licenses {
+                license {
+                    name 'MIT Licence'
+                    url 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
+                    distribution 'repo'
+                }
+            }
+            scm {
+                url 'https://github.com/alphagov/verify-test-utils'
+                connection 'scm:git:git://github.com/alphagov/verify-test-utils.git'
+                developerConnection 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
+            }
+            developers {
+                developer {
+                    name 'GDS Developers'
+                }
             }
         }
     }
