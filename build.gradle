@@ -1,6 +1,7 @@
 plugins { id "com.jfrog.bintray" version "1.8.4" }
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -77,6 +78,14 @@ publishing {
     }
 }
 
+signing {
+    useInMemoryPgpKeys(
+        System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
+        System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
+    )
+    sign configurations.archives
+}
+
 def customizePom(pom) {
     pom.withXml {
         def root = asNode()
@@ -139,6 +148,8 @@ bintray {
     }
 }
 task sonar(dependsOn: [':clean', ':build', 'sonarRunner'])
+
+task buildJars(dependsOn: ['jar', 'sourceJar', 'javadocJar'])
 
 defaultTasks 'jar'
 
