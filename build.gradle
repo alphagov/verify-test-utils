@@ -1,6 +1,7 @@
 plugins { id "com.jfrog.bintray" version "1.8.4" }
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -37,9 +38,21 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier "javadoc"
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            customizePom(pom)
             groupId = "uk.gov.ida"
             artifactId = "common-test-utils"
             version = "$version"
@@ -48,6 +61,71 @@ publishing {
 
             artifact sourceJar {
                 classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url System.getenv("SONATYPE_ENDPOINT")
+            credentials {
+                username System.getenv("SONATYPE_USERNAME")
+                password System.getenv("SONATYPE_PASSWORD")
+            }
+        }
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(
+        System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
+        System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
+    )
+    sign configurations.archives
+}
+
+def customizePom(pom) {
+    pom.withXml {
+        def root = asNode()
+
+        // eliminate test-scoped dependencies (no need in maven central POMs)
+        root.dependencies.removeAll { dep ->
+            dep.scope == "test"
+        }
+
+        // add all items necessary for maven central publication
+        root.children().last() + {
+            resolveStrategy = Closure.DELEGATE_FIRST
+
+            description 'Library for various SAML testing utility operations. These include'
+            name 'SAML Test Utils'
+            url 'https://github.com/alphagov/verify-test-utils'
+            organization {
+                name 'uk.gov.ida'
+                url 'https://github.com/alphagov'
+            }
+            issueManagement {
+                system 'GitHub'
+                url 'https://github.com/alphagov/verify-test-utils/issues'
+            }
+            licenses {
+                license {
+                    name 'MIT Licence'
+                    url 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
+                    distribution 'repo'
+                }
+            }
+            scm {
+                url 'https://github.com/alphagov/verify-test-utils'
+                connection 'scm:git:git://github.com/alphagov/verify-test-utils.git'
+                developerConnection 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
+            }
+            developers {
+                developer {
+                    name 'GDS Developers'
+                }
             }
         }
     }
@@ -70,6 +148,8 @@ bintray {
     }
 }
 task sonar(dependsOn: [':clean', ':build', 'sonarRunner'])
+
+task buildJars(dependsOn: ['jar', 'sourceJar', 'javadocJar'])
 
 defaultTasks 'jar'
 
