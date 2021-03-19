@@ -1,6 +1,6 @@
 plugins { id "com.jfrog.bintray" version "1.8.4" }
 apply plugin: 'java'
-apply plugin: 'maven-publish'
+apply plugin: 'maven'
 apply plugin: 'signing'
 
 java {
@@ -44,38 +44,51 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 artifacts {
-    archives jar
-    archives sourceJar
-    archives javadocJar
+    archives sourceJar, javadocJar
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            customizePom(pom)
-            groupId = "uk.gov.ida"
-            artifactId = "common-test-utils"
-            version = "$version"
+group = "uk.gov.ida"
+archivesBaseName = "common-test-utils"
+version = "$version"
 
-            from components.java
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            artifact sourceJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
+      repository(url: System.getenv("SONATYPE_ENDPOINT")) {
+        authentication(userName: System.getenv("SONATYPE_USERNAME"), password: System.getenv("SONATYPE_PASSWORD"))
+      }
+
+      pom.project {
+        name 'SAML Test Utils'
+        packaging 'jar'
+        // optionally artifactId can be defined here 
+        description 'Library for various SAML testing utility operations.'
+        url 'https://github.com/alphagov/verify-test-utils'
+
+        scm {
+            url 'https://github.com/alphagov/verify-test-utils'
+            connection 'scm:git:git://github.com/alphagov/verify-test-utils.git'
+            developerConnection 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
+        }
+
+        licenses {
+            license {
+                name 'MIT Licence'
+                url 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
+                distribution 'repo'
             }
         }
-    }
-    repositories {
-        maven {
-            url System.getenv("SONATYPE_ENDPOINT")
-            credentials {
-                username System.getenv("SONATYPE_USERNAME")
-                password System.getenv("SONATYPE_PASSWORD")
+
+        developers {
+            developer {
+                name 'GDS Developers'
             }
         }
+      }
     }
+  }
 }
 
 signing {
@@ -84,51 +97,6 @@ signing {
         System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
     )
     sign configurations.archives
-}
-
-def customizePom(pom) {
-    pom.withXml {
-        def root = asNode()
-
-        // eliminate test-scoped dependencies (no need in maven central POMs)
-        root.dependencies.removeAll { dep ->
-            dep.scope == "test"
-        }
-
-        // add all items necessary for maven central publication
-        root.children().last() + {
-            resolveStrategy = Closure.DELEGATE_FIRST
-
-            description 'Library for various SAML testing utility operations. These include'
-            name 'SAML Test Utils'
-            url 'https://github.com/alphagov/verify-test-utils'
-            organization {
-                name 'uk.gov.ida'
-                url 'https://github.com/alphagov'
-            }
-            issueManagement {
-                system 'GitHub'
-                url 'https://github.com/alphagov/verify-test-utils/issues'
-            }
-            licenses {
-                license {
-                    name 'MIT Licence'
-                    url 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
-                    distribution 'repo'
-                }
-            }
-            scm {
-                url 'https://github.com/alphagov/verify-test-utils'
-                connection 'scm:git:git://github.com/alphagov/verify-test-utils.git'
-                developerConnection 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
-            }
-            developers {
-                developer {
-                    name 'GDS Developers'
-                }
-            }
-        }
-    }
 }
 
 bintray {
@@ -147,9 +115,9 @@ bintray {
         }
     }
 }
+
 task sonar(dependsOn: [':clean', ':build', 'sonarRunner'])
 
 task buildJars(dependsOn: ['jar', 'sourceJar', 'javadocJar'])
 
 defaultTasks 'jar'
-
