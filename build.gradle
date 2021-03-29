@@ -1,16 +1,22 @@
-plugins { id "com.jfrog.bintray" version "1.8.4" }
+plugins { 
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
+}
 apply plugin: 'java'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+    withJavadocJar()
+    withSourcesJar()
 }
 
 def buildVersion = "2.0.0-${System.env.BUILD_NUMBER ?: 'SNAPSHOT'}"
 group = "uk.gov.ida"
 version = "$buildVersion"
+archivesBaseName = "common-test-utils"
 
 repositories {
     maven { url 'https://gds.jfrog.io/artifactory/allowed-repos' }
@@ -34,61 +40,19 @@ dependencies {
                         'org.mockito:mockito-core:3.2.0'
 }
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allJava
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier "javadoc"
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourceJar, javadocJar
-}
-
-group = "uk.gov.ida"
-archivesBaseName = "common-test-utils"
-version = "$version"
-
-uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-      repository(url: System.getenv("SONATYPE_ENDPOINT")) {
-        authentication(userName: System.getenv("SONATYPE_USERNAME"), password: System.getenv("SONATYPE_PASSWORD"))
-      }
-
-      pom.project {
-        name 'SAML Test Utils'
-        packaging 'jar'
-        // optionally artifactId can be defined here 
-        description 'Library for various SAML testing utility operations.'
-        url 'https://github.com/alphagov/verify-test-utils'
-
-        scm {
-            url 'https://github.com/alphagov/verify-test-utils'
-            connection 'scm:git:git://github.com/alphagov/verify-test-utils.git'
-            developerConnection 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
+nexusPublishing {
+    useStaging = true
+    repositories {
+        sonatype {
+            // because we registered in Sonatype after 24 Feb 2021, we provide these URIs
+            // see: https://github.com/gradle-nexus/publish-plugin/blob/master/README.md
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username = System.getenv("SONATYPE_USERNAME")
+            password = System.getenv("SONATYPE_PASSWORD")
+            System.out.println("Configured nexusPublishing.repositories.sonatype")
         }
-
-        licenses {
-            license {
-                name 'MIT Licence'
-                url 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                name 'GDS Developers'
-            }
-        }
-      }
     }
-  }
 }
 
 signing {
@@ -96,22 +60,42 @@ signing {
         System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
         System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
     )
-    sign configurations.archives
+    sign publishing.publications
+    System.out.println("Signed configurations.archives")
 }
 
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_API_KEY')
-    publications = ['mavenJava']
-    publish = true
-    pkg {
-        repo = 'maven-test'
-        name = 'ida-common-test-utils'
-        userOrg = 'alphagov'
-        licenses = ['MIT']
-        vcsUrl = 'https://github.com/alphagov/verify-test-utils.git'
-        version {
-            name = "$buildVersion"
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'SAML Test Utils'
+                packaging = 'jar'
+                description = 'Library for various SAML testing utility operations.'
+                url = 'https://github.com/alphagov/verify-test-utils'
+                artifactId = 'common-test-utils'
+
+                scm {
+                    url = 'https://github.com/alphagov/verify-test-utils'
+                    connection = 'scm:git:git://github.com/alphagov/verify-test-utils.git'
+                    developerConnection = 'scm:git:ssh://git@github.com:alphagov/verify-test-utils.git'
+                }
+
+                licenses {
+                    license {
+                        name = 'MIT Licence'
+                        url = 'https://github.com/alphagov/verify-test-utils/blob/master/LICENCE'
+                        distribution = 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        name = 'GDS Developers'
+                    }
+                }
+            } // pom
+            System.out.println("Configured pom")
         }
     }
 }
@@ -119,5 +103,3 @@ bintray {
 task sonar(dependsOn: [':clean', ':build', 'sonarRunner'])
 
 task buildJars(dependsOn: ['jar', 'sourceJar', 'javadocJar'])
-
-defaultTasks 'jar'
