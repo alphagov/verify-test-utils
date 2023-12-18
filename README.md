@@ -1,7 +1,8 @@
-
 # SAML Test Utils
 
-[![Build Status](https://travis-ci.org/alphagov/verify-test-utils.svg?branch=master)](https://travis-ci.org/alphagov/verify-test-utils)
+>**GOV.UK Verify has closed**
+>
+>This repository is out of date and has been archived
 
 Library for various SAML testing utility operations. These include:
 
